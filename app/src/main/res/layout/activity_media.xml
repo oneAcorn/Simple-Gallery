@@ -65,4 +65,18 @@
             </com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller>
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </RelativeLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/luckyMeBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="30dp"
+        android:backgroundTint="#D3EFBC"
+        android:contentDescription="lucky me"
+        android:src="@drawable/baseline_tag_faces_24"
+        app:layout_anchor="@id/media_holder"
+        app:layout_anchorGravity="bottom|end"
+        app:maxImageSize="32dp"
+        app:tint="#DD403B37" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

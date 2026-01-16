@@ -122,6 +122,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         }
 
         updateWidgets()
+
+        binding.luckyMeBtn.setOnClickListener{
+            openRandomMedium()
+        }
     }
 
     override fun onStart() {
