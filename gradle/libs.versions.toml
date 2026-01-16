@@ -15,7 +15,7 @@ room = "2.6.0-beta01"
 #Simple tools
 simple-commons = "9e60e24790"
 #Gradle
-gradlePlugins-agp = "7.4.0"
+gradlePlugins-agp = "8.3.0"
 #Other
 androidGifDrawable = "1.2.25"
 androidImageCropper = "4.5.0"
@@ -33,6 +33,7 @@ media3Exoplayer = "1.1.0"
 okhttp = "4.9.0"
 okio = "3.0.0"
 picasso = "2.71828"
+photoFilter = "1.0.2"
 #build
 app-build-compileSDKVersion = "34"
 app-build-targetSDK = "33"
@@ -68,12 +69,13 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 sanselan = { module = "org.apache.sanselan:sanselan", version.ref = "sanselan" }
 sdk-videowidget = { module = "com.google.vr:sdk-videowidget", version.ref = "sdkVideowidget" }
-sdk-panowidget = { module = "com.google.vr:sdk-panowidget", version.ref = "sdkPanowidget" }
+sdk-panowidget = { group = "com.google.vr", name = "sdk-panowidget", version.ref = "sdkPanowidget" }
 apng = { module = "com.github.penfeizhou.android.animation:apng", version.ref = "apng" }
 awebp = { module = "com.github.penfeizhou.android.animation:awebp", version.ref = "awebp" }
 glide-compiler = { module = "com.github.bumptech.glide:ksp", version.ref = "glideCompiler" }
 zjupure-webpdecoder = { module = "com.github.zjupure:webpdecoder", version.ref = "zjupureWebpdecoder" }
 picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
+photofilters = { group = "com.github.zomato", name = "androidphotofilters", version.ref = "photoFilter" }
 [bundles]
 room = [
     "androidx-room-ktx",

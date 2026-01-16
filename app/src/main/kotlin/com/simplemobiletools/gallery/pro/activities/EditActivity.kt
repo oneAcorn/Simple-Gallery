@@ -46,7 +46,6 @@ import com.simplemobiletools.gallery.pro.extensions.fixDateTaken
 import com.simplemobiletools.gallery.pro.extensions.openEditor
 import com.simplemobiletools.gallery.pro.helpers.*
 import com.simplemobiletools.gallery.pro.models.FilterItem
-import com.zomato.photofilters.FilterPack
 import com.zomato.photofilters.imageprocessors.Filter
 import java.io.*
 import kotlin.math.max
@@ -230,7 +229,7 @@ class EditActivity : SimpleActivity(), CropImageView.OnCropImageCompleteListener
                         bottomCropRotateClicked()
                     }
 
-                    if (filterInitialBitmap != null && currentFilter != null && currentFilter.filter.name != getString(com.simplemobiletools.commons.R.string.none)) {
+                    if (filterInitialBitmap != null && currentFilter != null) {
                         binding.defaultImageView.onGlobalLayout {
                             applyFilter(currentFilter)
                         }
@@ -655,13 +654,13 @@ class EditActivity : SimpleActivity(), CropImageView.OnCropImageCompleteListener
                     val filterThumbnailsManager = FilterThumbnailsManager()
                     filterThumbnailsManager.clearThumbs()
 
-                    val noFilter = Filter(getString(com.simplemobiletools.commons.R.string.none))
-                    filterThumbnailsManager.addThumb(FilterItem(bitmap, noFilter))
-
-                    FilterPack.getFilterPack(this).forEach {
-                        val filterItem = FilterItem(bitmap, it)
-                        filterThumbnailsManager.addThumb(filterItem)
-                    }
+//                    val noFilter = Filter(getString(com.simplemobiletools.commons.R.string.none))
+//                    filterThumbnailsManager.addThumb(FilterItem(bitmap, noFilter))
+//
+//                    FilterPack.getFilterPack(this).forEach {
+//                        val filterItem = FilterItem(bitmap, it)
+//                        filterThumbnailsManager.addThumb(filterItem)
+//                    }
 
                     val filterItems = filterThumbnailsManager.processThumbs()
                     val adapter = FiltersAdapter(applicationContext, filterItems) {

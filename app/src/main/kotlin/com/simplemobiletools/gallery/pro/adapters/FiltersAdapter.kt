@@ -12,7 +12,7 @@ import com.simplemobiletools.gallery.pro.models.FilterItem
 class FiltersAdapter(val context: Context, val filterItems: ArrayList<FilterItem>, val itemClick: (Int) -> Unit) :
     RecyclerView.Adapter<FiltersAdapter.ViewHolder>() {
 
-    private var currentSelection = filterItems.first()
+    private var currentSelection = filterItems.firstOrNull()
     private var strokeBackground = context.resources.getDrawable(R.drawable.stroke_background)
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -40,7 +40,7 @@ class FiltersAdapter(val context: Context, val filterItems: ArrayList<FilterItem
     inner class ViewHolder(private val binding: EditorFilterItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bindView(filterItem: FilterItem): View {
             binding.apply {
-                editorFilterItemLabel.text = filterItem.filter.name
+                editorFilterItemLabel.text = "none"
                 editorFilterItemThumbnail.setImageBitmap(filterItem.bitmap)
                 editorFilterItemThumbnail.background = if (getCurrentFilter() == filterItem) {
                     strokeBackground

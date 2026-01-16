@@ -93,7 +93,7 @@ android {
         abortOnError = false
     }
 
-    packagingOptions {
+    packaging {
         resources {
             excludes += "META-INF/library_release.kotlin_module"
         }
@@ -107,10 +107,10 @@ dependencies {
     implementation(libs.android.gif.drawable)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.sdk.panowidget)
-    implementation(libs.sdk.videowidget)
+//    implementation(libs.sdk.panowidget)
+//    implementation(libs.sdk.videowidget)
     implementation(libs.sanselan)
-    implementation(libs.imagefilters)
+//    implementation(libs.imagefilters)
     implementation(libs.androidsvg.aar)
     implementation(libs.gestureviews)
     implementation(libs.subsamplingscaleimageview)
@@ -122,6 +122,9 @@ dependencies {
         exclude(group = "com.squareup.okhttp3", module = "okhttp")
     }
     compileOnly(libs.okhttp)
+
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
+    implementation(libs.photofilters)
 
     ksp(libs.glide.compiler)
     implementation(libs.zjupure.webpdecoder)
