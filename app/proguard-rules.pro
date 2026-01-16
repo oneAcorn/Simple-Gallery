@@ -21,3 +21,13 @@ native <methods>;
 
 # Reprint
 -keep class com.github.ajalt.reprint.module.** { *; }
+
+
+# Please add these rules to your existing keep rules in order to suppress warnings.
+# This is generated automatically by the Android Gradle plugin.
+-dontwarn com.google.protobuf.nano.ExtendableMessageNano
+-dontwarn com.google.protobuf.nano.FieldArray
+-dontwarn com.google.protobuf.nano.InternalNano
+-dontwarn com.google.protobuf.nano.InvalidProtocolBufferNanoException
+-dontwarn com.google.protobuf.nano.MessageNano
+-dontwarn com.google.protobuf.nano.WireFormatNano
