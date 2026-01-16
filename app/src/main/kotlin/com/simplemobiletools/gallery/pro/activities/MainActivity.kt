@@ -157,6 +157,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.directoriesSwitchSearching.setOnClickListener {
             launchSearchActivity()
         }
+        binding.luckyMeBtn.setOnClickListener{
+            luckyMe()
+        }
 
         // just request the permission, tryLoadGallery will then trigger in onResume
         handleMediaPermissions { success ->
@@ -898,12 +901,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    private fun itemClicked(path: String) {
+    private fun itemClicked(path: String, luckyMe: Boolean = false) {
         handleLockedFolderOpening(path) { success ->
             if (success) {
                 Intent(this, MediaActivity::class.java).apply {
                     putExtra(SKIP_AUTHENTICATION, true)
                     putExtra(DIRECTORY, path)
+                    putExtra(LUCKY_ME, luckyMe)
                     handleMediaIntent(this)
                 }
             }
@@ -1365,6 +1369,16 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
             }
         }
+    }
+
+    private fun luckyMe() {
+        val targetDir = mDirs.random()
+        val path = targetDir.path
+        if (path == config.tempFolderPath) {
+            Toast.makeText(this, "you are not lucky enough", Toast.LENGTH_SHORT).show()
+            return
+        }
+        itemClicked(path, luckyMe = true)
     }
 
     private fun getCurrentlyDisplayedDirs() = getRecyclerAdapter()?.dirs ?: ArrayList()

@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/directories_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- 顶部菜单 -->
     <com.simplemobiletools.commons.views.MySearchMenu
         android:id="@+id/main_menu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <!-- 内容区域 -->
     <RelativeLayout
         android:id="@+id/directories_holder"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <com.simplemobiletools.commons.views.MyTextView
@@ -56,13 +59,13 @@
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/directories_refresh_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_below="@+id/directories_switch_searching">
 
             <com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
                 android:id="@+id/directories_fastscroller"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 app:supportSwipeToRefresh="true">
 
                 <com.simplemobiletools.commons.views.MyRecyclerView
@@ -75,6 +78,21 @@
                     app:spanCount="@integer/directory_columns_vertical_scroll" />
 
             </com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller>
+
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
     </RelativeLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/luckyMeBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="30dp"
+        android:backgroundTint="@color/md_deep_orange"
+        android:contentDescription="lucky me"
+        android:src="@drawable/baseline_tag_faces_24"
+        app:layout_anchor="@id/directories_holder"
+        app:layout_anchorGravity="bottom|end" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -885,6 +885,13 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
         mLatestMediaId = getLatestMediaId()
         mLatestMediaDateId = getLatestMediaByDateId()
+
+        if (!isFromCache && intent.getBooleanExtra(LUCKY_ME, false)) {
+            openRandomMedium()
+            // 执行一次后清除标志，防止从后台返回时再次触发
+            intent.putExtra(LUCKY_ME, false)
+        }
+
         if (!isFromCache) {
             val mediaToInsert = (mMedia).filter { it is Medium && it.deletedTS == 0L }.map { it as Medium }
             Thread {
@@ -893,6 +900,26 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 } catch (e: Exception) {
                 }
             }.start()
+        }
+    }
+
+    /**
+     * 打开随机图片
+     *
+     */
+    private fun openRandomMedium() {
+        // 从 mMedia 中过滤出所有 Medium 类型的项（排除分组标题等）
+        val mediumItems = mMedia.filterIsInstance<Medium>()
+
+        // 检查是否有可用的图片/视频
+        if (mediumItems.isNotEmpty()) {
+            val randomMedium = mediumItems.random()
+
+            // 调用已有的 itemClicked 方法来处理点击逻辑
+            //    这会复用现有的打开 ViewPager 或视频播放器的逻辑
+            itemClicked(randomMedium.path)
+        } else {
+            toast("No media found to open.")
         }
     }
 
