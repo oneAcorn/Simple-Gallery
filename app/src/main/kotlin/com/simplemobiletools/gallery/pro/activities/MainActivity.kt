@@ -9,6 +9,7 @@ import android.os.Handler
 import android.provider.MediaStore
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -1372,10 +1373,30 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun luckyMe() {
-        val targetDir = mDirs.random()
+        Log.i("AcornTag", "luckyMe: ${mDirs.size}")
+        // 检查 mDirs 是否为空或仅包含无效目录
+        val validDirs = mDirs.filter {
+            it.path != config.tempFolderPath &&
+                it.mediaCnt > 0 &&
+                it.path != FAVORITES &&  // 可选：排除特殊目录
+                it.path != RECYCLE_BIN
+        }
+
+        if (validDirs.isEmpty()) {
+            // 根据具体情况给出不同的提示
+            if (mDirs.isEmpty()) {
+                Toast.makeText(this, getString(R.string.loading_directories), Toast.LENGTH_SHORT).show()
+            } else if (mDirs.all { it.path == config.tempFolderPath }) {
+                Toast.makeText(this, getString(R.string.you_are_not_lucky_enough), Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, getString(R.string.no_media_found), Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+        val targetDir = validDirs.random()
         val path = targetDir.path
         if (path == config.tempFolderPath) {
-            Toast.makeText(this, "you are not lucky enough", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.you_are_not_lucky_enough), Toast.LENGTH_SHORT).show()
             return
         }
         itemClicked(path, luckyMe = true)

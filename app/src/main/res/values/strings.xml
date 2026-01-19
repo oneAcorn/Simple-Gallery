@@ -396,4 +396,10 @@
         Haven't found some strings? There's more at
         https://github.com/SimpleMobileTools/Simple-Commons/tree/master/commons/src/main/res
     -->
+
+    <string name="loading_directories" translatable="false">Loading the directory... Please wait...</string>
+    <string name="loading_directories_please_wait" translatable="false">Loading the directory… Please try again later…</string>
+    <string name="no_media_found" translatable="false">No available media folder was found.</string>
+    <string name="no_valid_directories_found" translatable="false">No available directory.</string>
+    <string name="you_are_not_lucky_enough" translatable="false">you are not lucky enough</string>
 </resources>
