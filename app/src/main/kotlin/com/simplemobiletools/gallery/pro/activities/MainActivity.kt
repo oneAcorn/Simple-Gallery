@@ -40,6 +40,7 @@ import com.simplemobiletools.gallery.pro.interfaces.DirectoryOperationsListener
 import com.simplemobiletools.gallery.pro.jobs.NewPhotoFetcher
 import com.simplemobiletools.gallery.pro.models.Directory
 import com.simplemobiletools.gallery.pro.models.Medium
+import com.simplemobiletools.gallery.pro.unlock.UnlockState
 import java.io.*
 
 class MainActivity : SimpleActivity(), DirectoryOperationsListener {
@@ -85,6 +86,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mStoredPrimaryColor = 0
     private var mStoredStyleString = ""
     private val binding by viewBinding(ActivityMainBinding::inflate)
+    private val ACORN_TAG = "acornTag"
+
+    private var mIsPrivateMode = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         isMaterialActivity = true
@@ -122,7 +126,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             useTopSearchMenu = true
         )
 
-        binding.directoriesRefreshLayout.setOnRefreshListener { getDirectories() }
+        binding.directoriesRefreshLayout.setOnRefreshListener { refreshItems() }
         storeStateVariables()
         checkWhatsNewDialog()
 
@@ -195,6 +199,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     override fun onResume() {
         super.onResume()
+        // 每次恢复时检查解锁状态，更新私有模式标记
+        mIsPrivateMode = UnlockState.isExcludedUnlocked
+
         updateMenuColors()
         config.isThirdPartyIntent = false
         mDateFormat = config.dateFormat
@@ -358,19 +365,35 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun refreshMenuItems() {
         if (!mIsThirdPartyIntent) {
             binding.mainMenu.getToolbar().menu.apply {
-                findItem(R.id.column_count).isVisible = config.viewTypeFolders == VIEW_TYPE_GRID
-                findItem(R.id.set_as_default_folder).isVisible = !config.defaultFolder.isEmpty()
-                findItem(R.id.open_recycle_bin).isVisible = config.useRecycleBin && !config.showRecycleBinAtFolders
-                findItem(R.id.more_apps_from_us).isVisible = !resources.getBoolean(com.simplemobiletools.commons.R.bool.hide_google_relations)
+                if (mIsPrivateMode) {
+                    // 私有模式下隐藏大部分菜单项
+                    findItem(R.id.sort)?.isVisible = false
+                    findItem(R.id.filter)?.isVisible = false
+                    findItem(R.id.open_camera)?.isVisible = false
+                    findItem(R.id.create_new_folder)?.isVisible = false
+                    findItem(R.id.open_recycle_bin)?.isVisible = false
+                    findItem(R.id.set_as_default_folder)?.isVisible = false
+                    findItem(R.id.column_count)?.isVisible = false
+                    findItem(R.id.temporarily_show_hidden)?.isVisible = false
+                    findItem(R.id.stop_showing_hidden)?.isVisible = false
+                    findItem(R.id.temporarily_show_excluded)?.isVisible = false
+                    findItem(R.id.stop_showing_excluded)?.isVisible = false
+                } else {
+                    // 正常模式菜单（原有逻辑）
+                    findItem(R.id.column_count)?.isVisible = config.viewTypeFolders == VIEW_TYPE_GRID
+                    findItem(R.id.set_as_default_folder)?.isVisible = !config.defaultFolder.isEmpty()
+                    findItem(R.id.open_recycle_bin)?.isVisible = config.useRecycleBin && !config.showRecycleBinAtFolders
+                    findItem(R.id.more_apps_from_us)?.isVisible = !resources.getBoolean(com.simplemobiletools.commons.R.bool.hide_google_relations)
+                }
             }
         }
 
+        // 这些菜单项在私有模式下也隐藏
         binding.mainMenu.getToolbar().menu.apply {
-            findItem(R.id.temporarily_show_hidden).isVisible = !config.shouldShowHidden
-            findItem(R.id.stop_showing_hidden).isVisible = (!isRPlus() || isExternalStorageManager()) && config.temporarilyShowHidden
-
-            findItem(R.id.temporarily_show_excluded).isVisible = !config.temporarilyShowExcluded
-            findItem(R.id.stop_showing_excluded).isVisible = config.temporarilyShowExcluded
+            findItem(R.id.temporarily_show_hidden)?.isVisible = !config.shouldShowHidden && !mIsPrivateMode
+            findItem(R.id.stop_showing_hidden)?.isVisible = (!isRPlus() || isExternalStorageManager()) && config.temporarilyShowHidden && !mIsPrivateMode
+            findItem(R.id.temporarily_show_excluded)?.isVisible = !config.temporarilyShowExcluded && !mIsPrivateMode
+            findItem(R.id.stop_showing_excluded)?.isVisible = config.temporarilyShowExcluded && !mIsPrivateMode
         }
     }
 
@@ -531,7 +554,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 if (config.showAll) {
                     showAllMedia()
                 } else {
-                    getDirectories()
+                    if (mIsPrivateMode) {
+                        loadPrivateDirectories()
+                    } else {
+                        getDirectories()
+                    }
                 }
 
                 setupLayoutManager()
@@ -1402,6 +1429,68 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         itemClicked(path, luckyMe = true)
     }
 
+    /**
+     * 扫描私有目录下的所有图片文件夹，并显示
+     */
+    private fun loadPrivateDirectories() {
+        if (mIsGettingDirs) return
+        mIsGettingDirs = true
+
+        ensureBackgroundThread {
+            val privateRoot = filesDir
+            val directories = ArrayList<Directory>()
+            val stack = ArrayDeque<File>()
+            stack.add(privateRoot)
+
+            while (stack.isNotEmpty()) {
+                val dir = stack.removeFirst()
+                val files = dir.listFiles() ?: continue
+                val mediaFiles = files.filter { it.isFile && it.absolutePath.isMediaFile() }
+                if (mediaFiles.isNotEmpty()) {
+                    val tmb = mediaFiles.first().absolutePath
+                    val mediaCnt = mediaFiles.size
+                    val lastModified = mediaFiles.maxOf { it.lastModified() }
+                    val size = mediaFiles.sumOf { it.length() }
+                    val types = mediaFiles.fold(0) { acc, file ->
+                        acc or when {
+                            file.absolutePath.isVideoFast() -> TYPE_VIDEOS
+                            file.absolutePath.isGif() -> TYPE_GIFS
+                            file.absolutePath.isRawFast() -> TYPE_RAWS
+                            file.absolutePath.isSvg() -> TYPE_SVGS
+                            file.absolutePath.isPortrait() -> TYPE_PORTRAITS
+                            else -> TYPE_IMAGES
+                        }
+                    }
+                    val dirName = getFolderNameFromPath(dir.absolutePath)
+                    val directory = Directory(
+                        id = null,
+                        path = dir.absolutePath,
+                        tmb = tmb,
+                        name = dirName,
+                        mediaCnt = mediaCnt,
+                        modified = lastModified,
+                        taken = 0L,
+                        size = size,
+                        location = LOCATION_INTERNAL,
+                        types = types,
+                        sortValue = ""
+                    )
+                    directories.add(directory)
+                }
+                files.filter { it.isDirectory }.forEach { stack.add(it) }
+            }
+
+            runOnUiThread {
+                mIsGettingDirs = false
+                binding.directoriesRefreshLayout.isRefreshing = false
+                mDirs = directories
+                mCurrentPathPrefix = ""
+                setupAdapter(directories)
+                checkPlaceholderVisibility(directories)
+            }
+        }
+    }
+
     private fun getCurrentlyDisplayedDirs() = getRecyclerAdapter()?.dirs ?: ArrayList()
 
     private fun setupLatestMediaId() {
@@ -1522,7 +1611,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     override fun refreshItems() {
-        getDirectories()
+        Log.i(ACORN_TAG, "refreshItems: $mIsPrivateMode")
+        if (mIsPrivateMode) {
+            loadPrivateDirectories()
+        } else {
+            getDirectories()
+        }
     }
 
     override fun recheckPinnedFolders() {

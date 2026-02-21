@@ -185,6 +185,21 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/settings_unlock_pwd_holder"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.simplemobiletools.commons.views.MyTextView
+                    android:id="@+id/settings_unlock_pwd"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/unlock_pwd" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
                 android:id="@+id/settings_show_hidden_items_holder"
                 style="@style/SettingsHolderCheckboxStyle"
                 android:layout_width="match_parent"

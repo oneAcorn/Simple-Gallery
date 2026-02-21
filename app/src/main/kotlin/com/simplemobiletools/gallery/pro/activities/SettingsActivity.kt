@@ -18,6 +18,8 @@ import com.simplemobiletools.gallery.pro.dialogs.*
 import com.simplemobiletools.gallery.pro.extensions.*
 import com.simplemobiletools.gallery.pro.helpers.*
 import com.simplemobiletools.gallery.pro.models.AlbumCover
+import com.simplemobiletools.gallery.pro.unlock.UnlockState
+import com.simplemobiletools.gallery.pro.unlock.showEnterPasswordDialog
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -58,6 +60,7 @@ class SettingsActivity : SimpleActivity() {
         setupManageIncludedFolders()
         setupManageExcludedFolders()
         setupManageHiddenFolders()
+        setupUnlockPwd()
         setupSearchAllFiles()
         setupShowHiddenItems()
         setupAutoplayVideos()
@@ -224,6 +227,18 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsManageHiddenFoldersHolder.setOnClickListener {
             handleHiddenFolderPasswordProtection {
                 startActivity(Intent(this, HiddenFoldersActivity::class.java))
+            }
+        }
+    }
+
+    private fun setupUnlockPwd(){
+        binding.settingsUnlockPwdHolder.setOnClickListener {
+            showEnterPasswordDialog(this){
+//                Toast.makeText(this, "success:${UnlockState.isExcludedUnlocked}", Toast.LENGTH_SHORT).show()
+                // 启动 MainActivity 并清除栈顶，确保进入私有模式
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                startActivity(intent)
             }
         }
     }

@@ -49,6 +49,9 @@ android {
         debug {
             // we cannot change the original package name, else PhotoEditorSDK won't work
             //applicationIdSuffix = ".debug"
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         release {
             isMinifyEnabled = true
