@@ -162,7 +162,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.directoriesSwitchSearching.setOnClickListener {
             launchSearchActivity()
         }
-        binding.luckyMeBtn.setOnClickListener{
+        binding.luckyMeBtn.setOnClickListener {
             luckyMe()
         }
 
@@ -378,12 +378,14 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     findItem(R.id.stop_showing_hidden)?.isVisible = false
                     findItem(R.id.temporarily_show_excluded)?.isVisible = false
                     findItem(R.id.stop_showing_excluded)?.isVisible = false
+                    findItem(R.id.exit_private_mode)?.isVisible = true
                 } else {
                     // 正常模式菜单（原有逻辑）
                     findItem(R.id.column_count)?.isVisible = config.viewTypeFolders == VIEW_TYPE_GRID
                     findItem(R.id.set_as_default_folder)?.isVisible = !config.defaultFolder.isEmpty()
                     findItem(R.id.open_recycle_bin)?.isVisible = config.useRecycleBin && !config.showRecycleBinAtFolders
                     findItem(R.id.more_apps_from_us)?.isVisible = !resources.getBoolean(com.simplemobiletools.commons.R.bool.hide_google_relations)
+                    findItem(R.id.exit_private_mode)?.isVisible = false
                 }
             }
         }
@@ -438,6 +440,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 R.id.more_apps_from_us -> launchMoreAppsFromUsIntent()
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
+                R.id.exit_private_mode -> exitPrivateMode()
                 else -> return@setOnMenuItemClickListener false
             }
             return@setOnMenuItemClickListener true
@@ -1489,6 +1492,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 checkPlaceholderVisibility(directories)
             }
         }
+    }
+
+    private fun exitPrivateMode() {
+        UnlockState.isExcludedUnlocked = false
+        mIsPrivateMode = false
+        refreshItems()
     }
 
     private fun getCurrentlyDisplayedDirs() = getRecyclerAdapter()?.dirs ?: ArrayList()

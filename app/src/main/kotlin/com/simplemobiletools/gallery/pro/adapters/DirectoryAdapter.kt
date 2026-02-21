@@ -12,6 +12,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -151,6 +152,7 @@ class DirectoryAdapter(
             R.id.cab_delete -> askConfirmDelete()
             R.id.cab_select_photo -> tryChangeAlbumCover(false)
             R.id.cab_use_default -> tryChangeAlbumCover(true)
+            R.id.cab_move_to_private_folder -> moveToPrivateFolder()
         }
     }
 
@@ -512,6 +514,85 @@ class DirectoryAdapter(
         activity.handleDeletePasswordProtection {
             handleLockedFolderOpeningForFolders(getSelectedPaths()) {
                 copyMoveTo(it, false)
+            }
+        }
+    }
+
+    private fun moveToPrivateFolder() {
+        // 过滤掉特殊文件夹（收藏、回收站）和已加密文件夹
+        val selectedPaths = getSelectedPaths().filter {
+            it != FAVORITES && it != RECYCLE_BIN && !config.isFolderProtected(it)
+        }
+        if (selectedPaths.isEmpty()) {
+            activity.toast(R.string.no_valid_directories_found)
+            return
+        }
+
+        // 确认移动操作（数量提示）
+        val message = resources.getString(R.string.move_to_private_folder)
+        ConfirmationDialog(activity, message) {
+            performMoveToPrivateFolder(selectedPaths)
+        }
+    }
+
+    private fun performMoveToPrivateFolder(paths: List<String>) {
+        // 在后台线程执行文件操作
+        ensureBackgroundThread {
+            var success = true
+            val errorMessages = mutableListOf<String>()
+            val destRoot = activity.filesDir
+
+            for (sourcePath in paths) {
+                val sourceFile = File(sourcePath)
+                if (!sourceFile.exists() || !sourceFile.isDirectory) {
+                    errorMessages.add("${sourceFile.name} 不是有效文件夹")
+                    success = false
+                    continue
+                }
+
+                val destFolder = File(destRoot, sourceFile.name)
+
+                // 如果目标已存在，先递归删除（覆盖式移动）
+                if (destFolder.exists()) {
+                    if (!destFolder.deleteRecursively()) {
+                        errorMessages.add("无法删除已存在的目标文件夹：${destFolder.absolutePath}")
+                        success = false
+                        continue
+                    }
+                }
+
+                // 复制整个文件夹到目标
+                try {
+                    sourceFile.copyRecursively(destFolder, overwrite = true)
+                } catch (e: Exception) {
+                    errorMessages.add("复制文件夹 ${sourceFile.name} 失败：${e.message}")
+                    success = false
+                    // 复制失败时不删除源文件夹，继续下一个
+                    continue
+                }
+
+                // 删除源文件夹
+                try {
+                    if (!sourceFile.deleteRecursively()) {
+                        errorMessages.add("无法删除源文件夹：${sourceFile.absolutePath}")
+                        success = false
+                    }
+                } catch (e: Exception) {
+                    errorMessages.add("删除源文件夹 ${sourceFile.name} 失败：${e.message}")
+                    success = false
+                }
+            }
+
+            // 回到主线程显示结果
+            activity.runOnUiThread {
+                if (success) {
+                    activity.toast(com.simplemobiletools.commons.R.string.moving_success)
+                } else {
+                    activity.toast(errorMessages.joinToString("\n"), Toast.LENGTH_LONG)
+                }
+                // 刷新目录列表并退出操作模式
+                listener?.refreshItems()
+                finishActMode()
             }
         }
     }
