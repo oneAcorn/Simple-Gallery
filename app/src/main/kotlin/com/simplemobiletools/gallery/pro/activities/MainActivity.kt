@@ -365,12 +365,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun refreshMenuItems() {
         if (!mIsThirdPartyIntent) {
             binding.mainMenu.getToolbar().menu.apply {
+                findItem(R.id.sort)?.isVisible = !mIsPrivateMode
+                findItem(R.id.filter)?.isVisible = !mIsPrivateMode
+                findItem(R.id.open_camera)?.isVisible = !mIsPrivateMode
+                findItem(R.id.create_new_folder)?.isVisible = !mIsPrivateMode
                 if (mIsPrivateMode) {
                     // 私有模式下隐藏大部分菜单项
-                    findItem(R.id.sort)?.isVisible = false
-                    findItem(R.id.filter)?.isVisible = false
-                    findItem(R.id.open_camera)?.isVisible = false
-                    findItem(R.id.create_new_folder)?.isVisible = false
                     findItem(R.id.open_recycle_bin)?.isVisible = false
                     findItem(R.id.set_as_default_folder)?.isVisible = false
                     findItem(R.id.column_count)?.isVisible = false
@@ -1498,6 +1498,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         UnlockState.isExcludedUnlocked = false
         mIsPrivateMode = false
         refreshItems()
+        refreshMenuItems()
     }
 
     private fun getCurrentlyDisplayedDirs() = getRecyclerAdapter()?.dirs ?: ArrayList()

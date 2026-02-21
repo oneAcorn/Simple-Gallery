@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide
 import com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
 import com.simplemobiletools.commons.activities.BaseSimpleActivity
 import com.simplemobiletools.commons.adapters.MyRecyclerViewAdapter
+import com.simplemobiletools.commons.dialogs.ConfirmationDialog
 import com.simplemobiletools.commons.dialogs.PropertiesDialog
 import com.simplemobiletools.commons.dialogs.RenameDialog
 import com.simplemobiletools.commons.dialogs.RenameItemDialog
@@ -32,6 +33,7 @@ import com.simplemobiletools.gallery.pro.interfaces.MediaOperationsListener
 import com.simplemobiletools.gallery.pro.models.Medium
 import com.simplemobiletools.gallery.pro.models.ThumbnailItem
 import com.simplemobiletools.gallery.pro.models.ThumbnailSection
+import java.io.File
 
 class MediaAdapter(
     activity: BaseSimpleActivity, var media: ArrayList<ThumbnailItem>, val listener: MediaOperationsListener?, val isAGetIntent: Boolean,
@@ -176,6 +178,7 @@ class MediaAdapter(
             R.id.cab_set_as -> setAs()
             R.id.cab_resize -> resize()
             R.id.cab_delete -> checkDeleteConfirmation()
+            R.id.cab_move_to_private_folder -> moveToPrivateFolder()
         }
     }
 
@@ -388,6 +391,85 @@ class MediaAdapter(
         activity.handleDeletePasswordProtection {
             checkMediaManagementAndCopy(false)
         }
+    }
+
+    private fun moveToPrivateFolder() {
+        val selectedItems = getSelectedItems()
+        if (selectedItems.isEmpty()) return
+
+        val destDir = File(activity.filesDir, "Others")
+        if (!destDir.exists()) destDir.mkdirs()
+
+        val message = activity.resources.getString(R.string.move_to_private_folder)
+        ConfirmationDialog(activity, message) {
+            performMoveToPrivateFolder(selectedItems, destDir)
+        }
+    }
+
+    private fun performMoveToPrivateFolder(items: ArrayList<Medium>, destDir: File) {
+        ensureBackgroundThread {
+            var success = true
+            val errorMessages = mutableListOf<String>()
+
+            for (medium in items) {
+                val sourceFile = File(medium.path)
+                if (!sourceFile.exists() || !sourceFile.isFile) {
+                    errorMessages.add("${medium.name} 不存在")
+                    success = false
+                    continue
+                }
+
+                val destFile = resolveDestinationFile(destDir, sourceFile.name)
+
+                try {
+                    sourceFile.copyTo(destFile, overwrite = false)
+                } catch (e: Exception) {
+                    errorMessages.add("复制 ${medium.name} 失败：${e.message}")
+                    success = false
+                    continue
+                }
+
+                try {
+                    if (!sourceFile.delete()) {
+                        errorMessages.add("无法删除源文件：${sourceFile.absolutePath}")
+                        success = false
+                    }
+                } catch (e: Exception) {
+                    errorMessages.add("删除 ${medium.name} 失败：${e.message}")
+                    success = false
+                }
+            }
+
+            activity.runOnUiThread {
+                if (success) {
+                    activity.toast(com.simplemobiletools.commons.R.string.moving_success)
+                } else {
+                    activity.toast(errorMessages.joinToString("\n"), Toast.LENGTH_LONG)
+                }
+                listener?.refreshItems()
+                finishActMode()
+            }
+        }
+    }
+
+    private fun resolveDestinationFile(destDir: File, originalName: String): File {
+        var destFile = File(destDir, originalName)
+        if (!destFile.exists()) return destFile
+
+        val nameWithoutExt = originalName.substringBeforeLast(".")
+        val ext = originalName.substringAfterLast(".", "")
+        var counter = 1
+        while (true) {
+            val newName = if (ext.isNotEmpty()) {
+                "${nameWithoutExt}_$counter.$ext"
+            } else {
+                "${nameWithoutExt}_$counter"
+            }
+            destFile = File(destDir, newName)
+            if (!destFile.exists()) break
+            counter++
+        }
+        return destFile
     }
 
     private fun checkMediaManagementAndCopy(isCopyOperation: Boolean) {

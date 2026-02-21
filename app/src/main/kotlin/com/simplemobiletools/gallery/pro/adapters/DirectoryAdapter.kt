@@ -536,7 +536,6 @@ class DirectoryAdapter(
     }
 
     private fun performMoveToPrivateFolder(paths: List<String>) {
-        // 在后台线程执行文件操作
         ensureBackgroundThread {
             var success = true
             val errorMessages = mutableListOf<String>()
@@ -552,26 +551,14 @@ class DirectoryAdapter(
 
                 val destFolder = File(destRoot, sourceFile.name)
 
-                // 如果目标已存在，先递归删除（覆盖式移动）
-                if (destFolder.exists()) {
-                    if (!destFolder.deleteRecursively()) {
-                        errorMessages.add("无法删除已存在的目标文件夹：${destFolder.absolutePath}")
-                        success = false
-                        continue
-                    }
-                }
-
-                // 复制整个文件夹到目标
                 try {
-                    sourceFile.copyRecursively(destFolder, overwrite = true)
+                    mergeDirectories(sourceFile, destFolder)
                 } catch (e: Exception) {
-                    errorMessages.add("复制文件夹 ${sourceFile.name} 失败：${e.message}")
+                    errorMessages.add("合并文件夹 ${sourceFile.name} 失败：${e.message}")
                     success = false
-                    // 复制失败时不删除源文件夹，继续下一个
                     continue
                 }
 
-                // 删除源文件夹
                 try {
                     if (!sourceFile.deleteRecursively()) {
                         errorMessages.add("无法删除源文件夹：${sourceFile.absolutePath}")
@@ -583,18 +570,49 @@ class DirectoryAdapter(
                 }
             }
 
-            // 回到主线程显示结果
             activity.runOnUiThread {
                 if (success) {
                     activity.toast(com.simplemobiletools.commons.R.string.moving_success)
                 } else {
                     activity.toast(errorMessages.joinToString("\n"), Toast.LENGTH_LONG)
                 }
-                // 刷新目录列表并退出操作模式
                 listener?.refreshItems()
                 finishActMode()
             }
         }
+    }
+
+    private fun mergeDirectories(source: File, dest: File) {
+        if (!dest.exists()) dest.mkdirs()
+        source.listFiles()?.forEach { file ->
+            val destFile = File(dest, file.name)
+            if (file.isDirectory) {
+                mergeDirectories(file, destFile)
+            } else {
+                if (destFile.exists()) {
+                    val newName = generateUniqueFileName(dest, file.name)
+                    file.copyTo(File(dest, newName), overwrite = false)
+                } else {
+                    file.copyTo(destFile, overwrite = false)
+                }
+            }
+        }
+    }
+
+    private fun generateUniqueFileName(destDir: File, originalName: String): String {
+        val nameWithoutExt = originalName.substringBeforeLast(".")
+        val ext = originalName.substringAfterLast(".", "")
+        var counter = 1
+        var newName = originalName
+        while (File(destDir, newName).exists()) {
+            newName = if (ext.isNotEmpty()) {
+                "${nameWithoutExt}_$counter.$ext"
+            } else {
+                "${nameWithoutExt}_$counter"
+            }
+            counter++
+        }
+        return newName
     }
 
     private fun copyMoveTo(selectedPaths: Collection<String>, isCopyOperation: Boolean) {

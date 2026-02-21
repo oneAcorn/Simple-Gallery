@@ -119,5 +119,5 @@
         android:id="@+id/cab_move_to_private_folder"
         android:icon="@drawable/ic_select_all_vector"
         android:title="@string/move_to_private_folder"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 </menu>
