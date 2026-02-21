@@ -13,7 +13,9 @@ exif = "1.0.1"
 #Room
 room = "2.6.0-beta01"
 #Simple tools
-simple-commons = "9e60e24790"
+# 使用https://github.com/SimpleMobileTools/Simple-Gallery中的最新commit
+# 也可使用我fork的https://github.com/oneAcorn/Simple-Commons的commit
+simple-commons = "37078b151c41bec912b9c9b34f33500775f63814"
 #Gradle
 gradlePlugins-agp = "8.3.0"
 #Other
