@@ -58,7 +58,8 @@
     <string name="cant_unhide_folder">If a folder or one of its parent folders has a dot before its name, it is hidden and cannot be unhidden like this. You have to remove the dot by renaming it.</string>
 
     <!--Unlock-->
-    <string name="unlock_pwd" translatable="false">Unlock Password</string>
+    <string name="unlock_pwd" translatable="false">Unlock password</string>
+    <string name="reset_unlock_pwd" translatable="false">Reset unlock password</string>
     <string name="move_to_private_folder" translatable="false">Move to private folder</string>
     <string name="exit_private_mode" translatable="false">Exit private mode</string>
     <string name="temp_exit_private_mode" translatable="false">Temporarily exit private</string>

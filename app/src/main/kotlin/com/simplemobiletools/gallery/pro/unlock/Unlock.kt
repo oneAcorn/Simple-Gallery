@@ -3,11 +3,17 @@ package com.simplemobiletools.gallery.pro.unlock
 /**
  * Created by acorn on 2026/2/21.
  */
+import android.R.attr.textSize
+import android.app.Activity
 import android.content.Context
+import android.os.CountDownTimer
 import android.text.InputType
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.simplemobiletools.commons.extensions.toast
+import com.simplemobiletools.commons.helpers.ensureBackgroundThread
 import com.simplemobiletools.gallery.pro.helpers.Config
 import java.security.MessageDigest
 
@@ -171,4 +177,87 @@ fun showEnterPasswordDialog(context: Context, onSuccess: (() -> Unit)? = null) {
             }
             show()
         }
+}
+
+/**
+ * 显示重置密码对话框（带倒计时确认）
+ * @param context 上下文（应为 Activity）
+ * @param onSuccess 重置成功后的回调（可选）
+ */
+fun showResetPasswordDialog(context: Activity, onSuccess: (() -> Unit)? = null) {
+    val config = Config.newInstance(context)
+    val layout = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(48, 24, 48, 24)
+    }
+
+    val warningText = TextView(context).apply {
+        text = "警告：此操作将永久删除私有目录中的所有文件（包括所有文件夹和图片），并重置密码。此操作不可撤销。"
+        textSize = 16f
+        setTextColor(android.graphics.Color.RED)
+    }
+    layout.addView(warningText)
+
+    val countdownText = TextView(context).apply {
+        text = "请等待 10 秒后确认"
+        textSize = 14f
+        setPadding(0, 16, 0, 0)
+    }
+    layout.addView(countdownText)
+
+    val dialog = AlertDialog.Builder(context)
+        .setTitle("重置密码并删除所有文件")
+        .setView(layout)
+        .setPositiveButton("确认", null)
+        .setNegativeButton("取消", null)
+        .create()
+
+    dialog.setOnShowListener {
+        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveButton.isEnabled = false
+
+        object : CountDownTimer(10000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                countdownText.text = "确认按钮将在 ${millisUntilFinished / 1000} 秒后启用"
+            }
+
+            override fun onFinish() {
+                countdownText.text = "您已可以确认删除"
+                positiveButton.isEnabled = true
+            }
+        }.start()
+    }
+
+    dialog.show()
+
+    // 重设确认按钮点击监听
+    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+        // 立即禁用按钮防止重复点击
+        it.isEnabled = false
+        ensureBackgroundThread {
+            deleteAllPrivateFiles(context)
+            // 清空密码哈希
+            config.excludedPasswordHash = ""
+
+            context.runOnUiThread {
+                context.toast("私有目录已清空，密码已重置")
+                // 如果处于私有模式，退出私有模式
+                if (UnlockState.isExcludedUnlocked) {
+                    UnlockState.isExcludedUnlocked = false
+                }
+                onSuccess?.invoke()
+                dialog.dismiss()
+            }
+        }
+    }
+}
+
+/**
+ * 递归删除私有目录下的所有文件和文件夹
+ */
+private fun deleteAllPrivateFiles(context: Context) {
+    val privateDir = context.filesDir
+    privateDir.listFiles()?.forEach { file ->
+        file.deleteRecursively()
+    }
 }
