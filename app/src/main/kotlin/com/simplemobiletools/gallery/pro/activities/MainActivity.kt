@@ -10,6 +10,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
 import android.util.Log
+import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -89,6 +90,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private val ACORN_TAG = "acornTag"
 
     private var mIsPrivateMode = false
+    private var mIsTempExitPrivate = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         isMaterialActivity = true
@@ -369,6 +371,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 findItem(R.id.filter)?.isVisible = !mIsPrivateMode
                 findItem(R.id.open_camera)?.isVisible = !mIsPrivateMode
                 findItem(R.id.create_new_folder)?.isVisible = !mIsPrivateMode
+                findItem(R.id.temp_exit_private_mode)?.isVisible = mIsPrivateMode || mIsTempExitPrivate
+                findItem(R.id.exit_private_mode)?.isVisible = mIsPrivateMode || mIsTempExitPrivate
                 if (mIsPrivateMode) {
                     // 私有模式下隐藏大部分菜单项
                     findItem(R.id.open_recycle_bin)?.isVisible = false
@@ -378,14 +382,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     findItem(R.id.stop_showing_hidden)?.isVisible = false
                     findItem(R.id.temporarily_show_excluded)?.isVisible = false
                     findItem(R.id.stop_showing_excluded)?.isVisible = false
-                    findItem(R.id.exit_private_mode)?.isVisible = true
                 } else {
                     // 正常模式菜单（原有逻辑）
                     findItem(R.id.column_count)?.isVisible = config.viewTypeFolders == VIEW_TYPE_GRID
                     findItem(R.id.set_as_default_folder)?.isVisible = !config.defaultFolder.isEmpty()
                     findItem(R.id.open_recycle_bin)?.isVisible = config.useRecycleBin && !config.showRecycleBinAtFolders
                     findItem(R.id.more_apps_from_us)?.isVisible = !resources.getBoolean(com.simplemobiletools.commons.R.bool.hide_google_relations)
-                    findItem(R.id.exit_private_mode)?.isVisible = false
                 }
             }
         }
@@ -441,6 +443,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
                 R.id.exit_private_mode -> exitPrivateMode()
+                R.id.temp_exit_private_mode -> tempExitPrivateMode(menuItem)
                 else -> return@setOnMenuItemClickListener false
             }
             return@setOnMenuItemClickListener true
@@ -1495,8 +1498,21 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun exitPrivateMode() {
+        mIsTempExitPrivate = false
         UnlockState.isExcludedUnlocked = false
         mIsPrivateMode = false
+        refreshItems()
+        refreshMenuItems()
+    }
+
+    private fun tempExitPrivateMode(menuItem: MenuItem) {
+        menuItem.isChecked = !menuItem.isChecked
+        if (menuItem.isChecked) {
+            mIsTempExitPrivate = true
+        }
+        val isUnlock = !menuItem.isChecked
+        UnlockState.isExcludedUnlocked = isUnlock
+        mIsPrivateMode = isUnlock
         refreshItems()
         refreshMenuItems()
     }
